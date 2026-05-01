@@ -1,0 +1,17 @@
+{
+  "name": "apresentacao",
+  "version": "1.0.50",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "bun run --watch src/index.ts"
+  },
+  "dependencies": {
+    "elysia": "latest",
+    "resend": "^6.12.2"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.4.13",
+    "bun-types": "latest"
+  },
+  "module": "src/index.js"
+}
