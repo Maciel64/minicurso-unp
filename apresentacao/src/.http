@@ -2,7 +2,18 @@ POST http://localhost:3000/signin
 Content-Type: application/json
 
 {
-  "email": "macielsuassuna14@gmail.com",
+  "email": "macielsuassuna14+2@gmail.com",
   "password": "123456",
-  "name": "maciel"
+  "name": "maciel",
+  "cpf": "84977021070"
+}
+
+### Create Billing
+
+POST http://localhost:3000/billing
+Content-Type: application/json
+
+{
+  "userId": "cmoqd8uyg0000n1d5zhh55qhz",
+  "value": 100
 }
