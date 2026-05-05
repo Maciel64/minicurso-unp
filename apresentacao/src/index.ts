@@ -1,4 +1,5 @@
 import { Elysia, Static, t } from "elysia";
+import { cors } from "@elysiajs/cors";
 import { Resend } from "resend";
 import { PrismaClient } from "./generated/prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
@@ -7,7 +8,9 @@ import Handlebars from 'handlebars'
 import axios, { AxiosError } from "axios";
 import { addDays } from 'date-fns'
 
-const app = new Elysia().get("/", () => "Hello Elysia");
+const app = new Elysia()
+	.use(cors())
+	.get("/", () => "Hello Elysia");
 
 /**
  * Um fluxo comum de cadastro para um usuário:
@@ -38,7 +41,22 @@ process.on("beforeExit", async () => {
   await prisma.$disconnect();
 });
 
-const userRouter = new Elysia().post(
+const userRouter = new Elysia()
+	.get("/users", async () => {
+		return await prisma.user.findMany({
+			select: {
+				id: true,
+				name: true,
+				email: true,
+				cpf: true,
+				createdAt: true,
+			},
+			orderBy: {
+				createdAt: 'desc'
+			}
+		});
+	})
+	.post(
 	"/signin",
 	async ({ body }) => {
 		const { email, name, password, cpf } = body
@@ -389,7 +407,23 @@ export const AsaasWebhookResponse = t.Object({
 });
 
 
-const billingRouter = new Elysia().post('/billing', async (req) => {
+const billingRouter = new Elysia()
+	.get("/billings", async () => {
+		return await prisma.billing.findMany({
+			include: {
+				user: {
+					select: {
+						name: true,
+						email: true
+					}
+				}
+			},
+			orderBy: {
+				createdAt: 'desc'
+			}
+		});
+	})
+	.post('/billing', async (req) => {
 	const { userId, value } = req.body;
 
 	const user = await prisma.user.findUnique({
