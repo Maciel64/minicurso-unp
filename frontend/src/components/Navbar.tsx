@@ -1,6 +1,7 @@
 "use client"
 
 import Link from "next/link"
+import Image from "next/image"
 import { usePathname } from "next/navigation"
 import { Users, ReceiptText, LayoutDashboard } from "lucide-react"
 
@@ -18,13 +19,14 @@ export default function Navbar() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
           <div className="flex items-center gap-8">
-            <Link href="/" className="flex items-center gap-2 group">
-              <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center text-white shadow-lg shadow-indigo-500/20 group-hover:scale-110 transition-transform">
-                <ReceiptText size={18} />
-              </div>
-              <span className="font-bold text-xl tracking-tight text-gray-900 dark:text-white">
-                Billing<span className="text-indigo-600">Hub</span>
-              </span>
+            <Link href="/" className="flex items-center group py-2">
+                <Image 
+                  src="/logo.png" 
+                  alt="BillingHub"
+                  width={200}
+                  height={20}
+                  className="w-12"
+                />
             </Link>
             
             <div className="hidden sm:flex items-center gap-1">
@@ -36,7 +38,7 @@ export default function Navbar() {
                     href={item.href}
                     className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
                       isActive 
-                        ? "bg-indigo-50 text-indigo-600 dark:bg-indigo-900/20 dark:text-indigo-400" 
+                        ? "bg-brand-blue/10 text-brand-blue dark:bg-brand-yellow/10 dark:text-brand-yellow" 
                         : "text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800"
                     }`}
                   >

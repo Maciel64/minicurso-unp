@@ -514,8 +514,6 @@ const webhookRouter = new Elysia().post('/webhooks/asaas', async (req) => {
 		PAYMENT_DELETED: 'CANCELLED',
 	}
 
-  console.log("req.body", req.body)
-
 	const billing = await prisma.billing.findFirst({
 		where: {
 			externalId: req.body.payment.id,

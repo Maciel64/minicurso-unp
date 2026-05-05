@@ -1,6 +1,7 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { API_URL } from "@/lib/api"
 import { ReceiptText, User, DollarSign, ExternalLink, Calendar, Loader2, X, CheckCircle2, Clock, AlertCircle } from "lucide-react"
 
@@ -26,81 +27,78 @@ interface SimpleUser {
 }
 
 export default function BillingsPage() {
-  const [billings, setBillings] = useState<Billing[]>([])
-  const [users, setUsers] = useState<SimpleUser[]>([])
-  const [loading, setLoading] = useState(true)
+  const queryClient = useQueryClient()
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [formData, setFormData] = useState({
     userId: "",
     value: "",
   })
-  const [isSubmitting, setIsSubmitting] = useState(false)
 
-  const fetchData = async () => {
-    try {
-      const [billingsRes, usersRes] = await Promise.all([
-        fetch(`${API_URL}/billings`),
-        fetch(`${API_URL}/users`)
-      ])
-      const billingsData = await billingsRes.json()
-      const usersData = await usersRes.json()
-      setBillings(billingsData)
-      setUsers(usersData)
-    } catch (error) {
-      console.error("Error fetching data:", error)
-    } finally {
-      setLoading(false)
-    }
-  }
+  // Fetch Billings with 5s polling
+  const { data: billings = [], isLoading: isLoadingBillings } = useQuery<Billing[]>({
+    queryKey: ['billings'],
+    queryFn: async () => {
+      const res = await fetch(`${API_URL}/billings`)
+      return res.json()
+    },
+    refetchInterval: 5000,
+  })
 
-  useEffect(() => {
-    fetchData()
-  }, [])
+  // Fetch Users
+  const { data: users = [] } = useQuery<SimpleUser[]>({
+    queryKey: ['users'],
+    queryFn: async () => {
+      const res = await fetch(`${API_URL}/users`)
+      return res.json()
+    },
+  })
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsSubmitting(true)
-    try {
+  // Mutation to create billing
+  const createBillingMutation = useMutation({
+    mutationFn: async (newBilling: { userId: string, value: number }) => {
       const response = await fetch(`${API_URL}/billing`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          userId: formData.userId,
-          value: Number(formData.value)
-        }),
+        body: JSON.stringify(newBilling),
       })
-      if (response.ok) {
-        setIsModalOpen(false)
-        setFormData({ userId: "", value: "" })
-        fetchData()
-      }
-    } catch (error) {
-      console.error("Error generating billing:", error)
-    } finally {
-      setIsSubmitting(false)
-    }
+      if (!response.ok) throw new Error("Failed to create billing")
+      return response.json()
+    },
+    onSuccess: () => {
+      setIsModalOpen(false)
+      setFormData({ userId: "", value: "" })
+      queryClient.invalidateQueries({ queryKey: ['billings'] })
+    },
+  })
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    createBillingMutation.mutate({
+      userId: formData.userId,
+      value: Number(formData.value)
+    })
   }
 
   const getStatusBadge = (status: Billing['status']) => {
     switch (status) {
       case 'PAID':
         return (
-          <span className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-600 border border-emerald-100">
-            <CheckCircle2 size={12} />
+          <span className="flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-600/80 border border-emerald-200/50">
+            <CheckCircle2 size={12} className="opacity-70" />
             PAGO
           </span>
         )
       case 'PENDING':
         return (
-          <span className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-600 border border-amber-100">
-            <Clock size={12} />
+          <span className="flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold bg-brand-yellow/10 text-brand-blue/80 border border-brand-yellow/30">
+            <Clock size={12} className="opacity-70" />
             PENDENTE
           </span>
         )
       case 'CANCELLED':
         return (
-          <span className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-rose-50 text-rose-600 border border-rose-100">
-            <AlertCircle size={12} />
+          <span className="flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold bg-rose-50 text-rose-600/80 border border-rose-200/50">
+            <AlertCircle size={12} className="opacity-70" />
             CANCELADO
           </span>
         )
@@ -111,23 +109,23 @@ export default function BillingsPage() {
     <div className="space-y-8 animate-in fade-in duration-500">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Cobranças</h1>
+          <h1 className="text-3xl font-bold tracking-tight text-brand-blue dark:text-white">Cobranças</h1>
           <p className="text-gray-500 dark:text-gray-400 mt-1">
             Acompanhe e gere cobranças para seus clientes.
           </p>
         </div>
         <button
           onClick={() => setIsModalOpen(true)}
-          className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-xl font-medium transition-all shadow-lg shadow-indigo-500/20 active:scale-95"
+          className="flex items-center gap-2 bg-brand-blue hover:bg-brand-blue/90 text-white px-4 py-2.5 rounded-xl font-medium transition-all shadow-lg shadow-brand-blue/20 active:scale-95"
         >
           <ReceiptText size={20} />
           Gerar Cobrança
         </button>
       </div>
 
-      {loading ? (
+      {isLoadingBillings ? (
         <div className="flex flex-col items-center justify-center py-20 gap-4">
-          <Loader2 className="animate-spin text-indigo-600" size={40} />
+          <Loader2 className="animate-spin text-brand-blue" size={40} />
           <p className="text-gray-500 font-medium">Carregando cobranças...</p>
         </div>
       ) : (
@@ -152,7 +150,7 @@ export default function BillingsPage() {
                   </tr>
                 ) : (
                   billings.map((billing) => (
-                    <tr key={billing.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors group">
+                    <tr key={billing.id} className="hover:bg-brand-blue/5 dark:hover:bg-brand-blue/10 transition-colors group">
                       <td className="px-6 py-4">
                         <div className="flex flex-col">
                           <span className="font-medium text-gray-900 dark:text-white">{billing.user.name}</span>
@@ -160,7 +158,7 @@ export default function BillingsPage() {
                         </div>
                       </td>
                       <td className="px-6 py-4">
-                        <div className="flex items-center gap-1 font-semibold text-indigo-600">
+                        <div className="flex items-center gap-1 font-semibold text-brand-blue/90">
                           {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(billing.value)}
                         </div>
                       </td>
@@ -169,7 +167,7 @@ export default function BillingsPage() {
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
-                          <Calendar size={14} />
+                          <Calendar size={14} className="opacity-60" />
                           {billing.dueAt ? new Date(billing.dueAt).toLocaleDateString('pt-BR') : '-'}
                         </div>
                       </td>
@@ -178,10 +176,10 @@ export default function BillingsPage() {
                           href={billing.link}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="inline-flex items-center gap-2 text-sm font-medium text-indigo-600 hover:text-indigo-700 transition-colors bg-indigo-50 dark:bg-indigo-900/20 px-3 py-1.5 rounded-lg"
+                          className="inline-flex items-center gap-2 text-sm font-medium text-brand-blue/80 hover:text-brand-blue transition-colors bg-brand-blue/5 dark:bg-brand-yellow/10 px-3 py-1.5 rounded-lg border border-brand-blue/10 dark:border-brand-yellow/20"
                         >
                           Ver Fatura
-                          <ExternalLink size={14} />
+                          <ExternalLink size={14} className="opacity-70" />
                         </a>
                       </td>
                     </tr>
@@ -195,11 +193,11 @@ export default function BillingsPage() {
 
       {/* Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-white dark:bg-gray-900 w-full max-w-md rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+        <div className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-black/40 backdrop-blur-[2px] animate-in fade-in duration-200">
+          <div className="bg-white dark:bg-gray-900 w-full max-w-md rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 border border-gray-100 dark:border-gray-800">
             <div className="p-6 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between">
               <div>
-                <h3 className="text-xl font-bold">Gerar Nova Cobrança</h3>
+                <h3 className="text-xl font-bold text-brand-blue dark:text-white">Gerar Nova Cobrança</h3>
                 <p className="text-gray-500 text-sm">Escolha o cliente e o valor da cobrança.</p>
               </div>
               <button 
@@ -216,7 +214,7 @@ export default function BillingsPage() {
                   <User className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
                   <select
                     required
-                    className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50 focus:ring-2 focus:ring-indigo-500 outline-none transition-all appearance-none"
+                    className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50 focus:ring-2 focus:ring-brand-blue/20 outline-none transition-all appearance-none"
                     value={formData.userId}
                     onChange={(e) => setFormData({ ...formData, userId: e.target.value })}
                   >
@@ -238,15 +236,15 @@ export default function BillingsPage() {
                     type="number"
                     step="0.01"
                     placeholder="0,00"
-                    className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50 focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+                    className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50 focus:ring-2 focus:ring-brand-blue/20 outline-none transition-all"
                     value={formData.value}
                     onChange={(e) => setFormData({ ...formData, value: e.target.value })}
                   />
                 </div>
               </div>
               
-              <div className="bg-indigo-50 dark:bg-indigo-900/10 p-4 rounded-xl border border-indigo-100 dark:border-indigo-900/20">
-                <p className="text-xs text-indigo-700 dark:text-indigo-400 leading-relaxed">
+              <div className="bg-brand-blue/5 dark:bg-brand-yellow/5 p-4 rounded-xl border border-brand-blue/10 dark:border-brand-yellow/10">
+                <p className="text-xs text-brand-blue/70 dark:text-brand-yellow/80 leading-relaxed">
                   <strong>Aviso:</strong> A cobrança será gerada via Asaas e o cliente receberá um e-mail com o link para pagamento.
                 </p>
               </div>
@@ -260,11 +258,11 @@ export default function BillingsPage() {
                   Cancelar
                 </button>
                 <button
-                  disabled={isSubmitting || !formData.userId}
+                  disabled={createBillingMutation.isPending || !formData.userId}
                   type="submit"
-                  className="flex-1 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white px-4 py-2.5 rounded-xl font-medium transition-all shadow-lg shadow-indigo-500/20 flex items-center justify-center gap-2"
+                  className="flex-1 bg-brand-blue hover:bg-brand-blue/90 text-white px-4 py-2.5 rounded-xl font-medium transition-all shadow-lg shadow-brand-blue/20 flex items-center justify-center gap-2"
                 >
-                  {isSubmitting && <Loader2 size={16} className="animate-spin" />}
+                  {createBillingMutation.isPending && <Loader2 size={16} className="animate-spin" />}
                   Gerar
                 </button>
               </div>
