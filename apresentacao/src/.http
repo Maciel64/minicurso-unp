@@ -17,3 +17,69 @@ Content-Type: application/json
   "userId": "cmotjuo7q0000ped5f74nkw4i",
   "value": 100
 }
+
+###
+
+POST http://localhost:3000/webhooks/asaas
+Content-Type: application/json
+
+{
+  "id": "evt_071da53af2a9613df04213d0157d6b88\u002615594705",
+  "event": "PAYMENT_AUTHORIZED",
+  "dateCreated": "2026-05-05 04:01:57",
+  "account": {
+    "id": "37066d32-e2be-429b-b305-0673693e4efc",
+    "ownerId": null
+  },
+  "payment": {
+    "object": "payment",
+    "id": "pay_jy683x9067epz7e3",
+    "dateCreated": "2026-05-03",
+    "customer": "cus_000007900120",
+    "checkoutSession": null,
+    "paymentLink": null,
+    "value": 100.0,
+    "netValue": 97.52,
+    "originalValue": null,
+    "interestValue": null,
+    "description": null,
+    "billingType": "UNDEFINED",
+    "pixTransaction": null,
+    "status": "OVERDUE",
+    "dueDate": "2026-05-04",
+    "originalDueDate": "2026-05-04",
+    "paymentDate": null,
+    "clientPaymentDate": null,
+    "installmentNumber": null,
+    "invoiceUrl": "https://sandbox.asaas.com/i/fwnceoulqxm7qgnc",
+    "invoiceNumber": "14554883",
+    "externalReference": null,
+    "deleted": false,
+    "anticipated": false,
+    "anticipable": false,
+    "creditDate": null,
+    "estimatedCreditDate": null,
+    "transactionReceiptUrl": null,
+    "nossoNumero": "12350419",
+    "bankSlipUrl": "https://sandbox.asaas.com/b/pdf/fwnceoulqxm7qgnc",
+    "lastInvoiceViewedDate": null,
+    "lastBankSlipViewedDate": null,
+    "discount": {
+      "value": 0.0,
+      "limitDate": null,
+      "dueDateLimitDays": 0.0,
+      "type": "FIXED"
+    },
+    "fine": {
+      "value": 0.0,
+      "type": "FIXED"
+    },
+    "interest": {
+      "value": 0.0,
+      "type": "PERCENTAGE"
+    },
+    "postalService": false,
+    "escrow": null,
+    "refunds": null
+  }
+}

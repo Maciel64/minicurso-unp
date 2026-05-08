@@ -1,0 +1,24 @@
+{
+  "name": "apresentacao",
+  "version": "1.0.50",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "bun run --watch src/index.ts"
+  },
+  "dependencies": {
+    "@elysiajs/cors": "^1.4.2",
+    "@prisma/adapter-pg": "^7.8.0",
+    "@prisma/client": "^7.8.0",
+    "axios": "^1.16.0",
+    "date-fns": "^4.1.0",
+    "elysia": "latest",
+    "handlebars": "^4.7.9",
+    "resend": "^6.12.2"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.4.14",
+    "bun-types": "latest",
+    "prisma": "^7.8.0"
+  },
+  "module": "src/index.js"
+}
